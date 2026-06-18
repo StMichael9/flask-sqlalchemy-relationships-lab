@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, make_response
 from flask_migrate import Migrate
 
 from models import db, Event, Session, Speaker, Bio
@@ -18,27 +18,73 @@ db.init_app(app)
 
 @app.route('/events')
 def get_events():
-    pass
+    event = Event.query.all()
+    events_dict_list = []
+    for e in event:
+          events_dict_list.append({
+        "id": e.id,
+        "name": e.name,
+        "location": e.location
+    })
+    return  make_response(jsonify(events_dict_list ),200)
 
 
 @app.route('/events/<int:id>/sessions')
 def get_event_sessions(id):
-    pass
-
+    event = Event.query.filter_by(id=id).first()
+    if not event:
+        return make_response({"error": "Event not found"}, 404)
+    sessions_list = []
+    for s in event.sessions:
+        sessions_list.append({
+            "id": s.id,
+            "title": s.title,
+            "start_time": s.start_time.isoformat(),
+    })
+    return  make_response(jsonify(sessions_list ),200)
 
 @app.route('/speakers')
 def get_speakers():
-    pass
+    speaker = Speaker.query.all()
+    speaker_dict_list = []
+    for s in speaker:
+        speaker_dict_list.append({
+        "id": s.id,
+        "name": s.name,
+    })
+    return make_response(jsonify(speaker_dict_list), 200)
 
 
 @app.route('/speakers/<int:id>')
 def get_speaker(id):
-    pass
+    speaker = Speaker.query.filter_by(id=id).first()
+    if not speaker:
+        return make_response({"error": "Speaker not found"}, 404)
+    speaker_data = {
+    "id": speaker.id,
+    "name": speaker.name,
+    "bio_text": speaker.bio.bio_text if speaker.bio else "No bio available"
+    }
+    return make_response(jsonify(speaker_data), 200)
+
+        
 
 
 @app.route('/sessions/<int:id>/speakers')
 def get_session_speakers(id):
-    pass
+    session = Session.query.filter_by(id=id).first()
+    if not session:
+         return make_response({"error": "Session not found"}, 404)
+    session_list = []
+    for s in session.speakers:
+        session_list.append({
+            "id": s.id,
+            "name": s.name,
+            "bio_text": s.bio.bio_text if s.bio else "No bio available"
+
+    })
+    return  make_response(jsonify(session_list ),200)
+
 
 
 if __name__ == '__main__':
